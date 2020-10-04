@@ -310,6 +310,8 @@ function comprobarColor(elemento, variable) {
             colorLadrillo = valor(elemento);
         } else if (elemento === "cL2") {
             colorLadrillo2 = valor(elemento);
+        } else if (elemento === "cP") {
+            colorPaleta = valor(elemento);
         }
     } else if (valor(elemento).length !== 0) {
         alert("Introduce bien los valores.");
@@ -333,6 +335,7 @@ function jugar() {
     comprobarColor("cB2");
     comprobarColor("cL1");
     comprobarColor("cL2");
+    comprobarColor("cP");
 
     if (parseFloat(valor("tB1")) > 0 && parseFloat(valor("tB1")) <= 40) {
         ballRadius = parseFloat(valor("tB1"));

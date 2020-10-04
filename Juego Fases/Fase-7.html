@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Juego 2D</title>
+
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Poppins&display=swap");
+
+        * {
+            font-family: "Poppins", sans-serif;
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            margin: 0 200px 0 200px;
+        }
+
+        h1 {
+            font-size: 2em;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        canvas {
+            width: 100%;
+            height: 80vh;
+            background-color: #dddddd;
+            transition: 0.5s;
+            display: block;
+            margin: 50px auto;
+        }
+
+        canvas.activado {
+            background-color: #222222;
+        }
+
+        /* ESTILOS PARA LA LETRA DEL PUNTAJE
+            position: fixed; 
+            PERMITE POSICONARLO A GUSTO EN NUESTRO CASO A 50 PIXELES SEPARADO DEL MARGEN SUPERIOR
+        */
+        #puntos{ 
+            font-size: 2em;
+            position: fixed;
+            top: 50px;
+            color: #2196f3;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Juego 2D - Fase 7</h1>
+    <canvas id="miCanvas"> </canvas>
+
+    <!-- Div para almacenar el puntaje que sera escrito en JavaScript  -->
+    <div id="puntos">
+    </div>
+
+    <script>
+        var canvas = document.getElementById("miCanvas");
+        var ctx = canvas.getContext("2d");
+        
+        var ballRadius = 3;
+        var x = canvas.width / 2;
+        var y = canvas.height - 30;
+        var dx = 2;
+        var dy = -2;
+
+        var x2 = x;
+        var y2 = y;
+        var dx2 = -0.8;
+        var dy2 = -0.8;
+
+        // Variable para saber si se dibuja la segunda bola depende del numero arrojado al azar
+        var segundaBola = false;
+        if(Math.random() * 100 > 50){
+            segundaBola = true;
+        }
+
+        // Paleta
+        var alturaPaleta = 4;
+        var anchuraPaleta = 40;
+
+        // Si el valor de la variable segundaBola es true, hara que la anchura de la paleta sea mas grande
+
+        if(segundaBola){
+            anchuraPaleta = 60;
+        }
+
+        var paletaPosX = (canvas.width - anchuraPaleta) / 2;
+        var flechaDerechaPulsada = false;
+        var flechaIzquierdaPulsada = false;
+
+        // VARIABLES ASOCIADAS A LOS LADRILLOS
+
+        var numFilasLadrillos = 0;
+        var numColumnasLadrillos = 0;
+
+        // Se crea un bucle para poner un numero al azar de ladriilos y columnas, esto para que nos arroje un numeros entre 1 y 12 en filas y entre 1 y 8 en columnas
+
+        do {
+            numFilasLadrillos = Math.round(Math.random() * 100);
+            numColumnasLadrillos = Math.round(Math.random() * 10);
+        } while (numFilasLadrillos < 1 || numFilasLadrillos > 12 || numColumnasLadrillos < 1 || numColumnasLadrillos > 8);
+
+        var anchoLadrillo = 20;
+        var alturaLadrillo = 5;
+        var rellenoLadrillos = 2;
+        var vacioSuperiorLadrillos = 10;
+        var vacioIzquierdoLadrillos = 17;
+
+        var puntaje = 0;
+
+        var ladrillos = [];
+
+        for (var columna = 0; columna < numColumnasLadrillos; columna++) {
+            ladrillos[columna] = [];
+
+            for (var fila = 0; fila < numFilasLadrillos; fila++) {
+                    
+                // estado definira si el ladrillo es visible o no en 10 sera visible, mas adelante permite hacer un degradado
+                ladrillos[columna][fila] = { x: 0, y: 0, estado: 10, ciclo: 10 };
+            }
+        }
+
+        document.addEventListener("keydown", teclaPresionada, false);
+        document.addEventListener("keyup", teclaLiberada, false);
+
+        function teclaPresionada(e) {
+            if (e.keyCode == 39) {
+                flechaDerechaPulsada = true;
+            } else if (e.keyCode == 37) {
+                flechaIzquierdaPulsada = true;
+            }
+        }
+        function teclaLiberada(e) {
+            if (e.keyCode == 39) {
+                flechaDerechaPulsada = false;
+            } else if (e.keyCode == 37) {
+                flechaIzquierdaPulsada = false;
+            }
+        }
+
+        function dibujarBola(cordernaX, cordenaY, tamaño, color) {
+            ctx.beginPath();
+            ctx.arc(cordernaX, cordenaY, tamaño, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function dibujarPaleta() {
+            ctx.beginPath();
+            ctx.rect(paletaPosX, canvas.height - alturaPaleta, anchuraPaleta, alturaPaleta);
+            ctx.fillStyle = "#f5d109";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        var colorLadrillos = false; // La utlizaremos para cambiar el color de los ladrillos
+
+        function dibujarLadrillos() {
+            for (var columnas = 0; columnas < numColumnasLadrillos; columnas++) {
+                for (var filas = 0; filas < numFilasLadrillos; filas++) {
+
+                    if (ladrillos[columnas][filas].estado > 0) {
+
+                        var b = ladrillos[columnas][filas];
+
+                        var brickX = filas * (anchoLadrillo + rellenoLadrillos) + vacioIzquierdoLadrillos;
+                        var brickY = columnas * (alturaLadrillo + rellenoLadrillos) + vacioSuperiorLadrillos;
+
+                        // Se reduce el estado y el ciclo del ladrillo para posteriormente hacer un degradado y eliminar el ladrillo
+
+                        if (b.estado < 10 && b.estado > 1) {
+                            b.ciclo--;
+                            if (b.ciclo == 0) {
+                                if (b.estado > 1) {
+                                    b.estado--;
+                                    b.ciclo = 10;
+                                }
+                            }
+                        }
+
+                        ladrillos[columnas][filas].x = brickX;
+                        ladrillos[columnas][filas].y = brickY;
+
+                        ctx.beginPath();
+                        ctx.rect(brickX, brickY, anchoLadrillo, alturaLadrillo);
+
+                        // las filas cuyo numero es par, se pintaran diferentes a las impares
+
+                        if (b.estado == 10) {
+                            if (colorLadrillos) {
+                                if (filas % 2) {
+                                    ctx.fillStyle = "#e61c1cdc";
+                                } else {
+                                    ctx.fillStyle = "#e4bb06fa";
+                                }
+                            } else {
+                                if (filas % 2) {
+                                    ctx.fillStyle = "#e4bb06fa";
+                                } else {
+                                    ctx.fillStyle = "#e61c1cdc";
+                                }
+                            }
+
+                        // Como anteriormente el estado se estara reduciendo los ladrillos que hayan sido golpeados, cambiaran de color hasta desaparecer.
+                        
+                        } else if (b.estado == 9) {
+                            ctx.fillStyle = "#fad638";
+                        } else if (b.estado == 8) {
+                            ctx.fillStyle = "#fbdb51";
+                        } else if (b.estado == 7) {
+                            ctx.fillStyle = "#fbe16a";
+                        } else if (b.estado == 6) {
+                            ctx.fillStyle = "#fce683";
+                        } else if (b.estado == 5) {
+                            ctx.fillStyle = "#fceb9c";
+                        } else if (b.estado == 4) {
+                            ctx.fillStyle = "#fdf0b4";
+                        } else if (b.estado == 3) {
+                            ctx.fillStyle = "#fef5cd";
+                        } else if (b.estado == 2) {
+                            ctx.fillStyle = "#fefae6";
+                        } else if (b.estado == 1) {
+                            ctx.fillStyle = "transparent";
+                        }
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                }
+            }
+        }
+
+        // Detectar la colision
+        function deteccionColision() {
+            // Los ciclos recorre todos los ladrillos
+            for (var c = 0; c < numColumnasLadrillos; c++) {
+                for (var f = 0; f < numFilasLadrillos; f++) {
+
+                    var b = ladrillos[c][f];
+
+                    // Funcion para reducir el estado, el ciclo, sumar el puntaje y ver si se ha ganado, esto es para evitar copiar el mismo codigo mas adelante
+
+                    function sumarPuntaje(){
+                        b.estado--;
+                        b.ciclo--;
+                        puntaje++;
+                        if (puntaje == numFilasLadrillos * numColumnasLadrillos) {
+                            alert("FELICITACIONES: HAS GANADO");
+                            document.location.reload();
+                        }
+                    }
+
+                    /* 
+                        En las condicionales nos lanzar dara un numero al azar
+
+                        Este si es par, y si el ladrillo con el cual ha chocado es visible entonces rebotara la bola, llamara a la funcion anteriormente hecha, la cual reducira el estado y hara que el ladrillo se degrade ademas sumara 1 al puntaje, 
+                        
+                        De lo contrario si el numero es impar la bola rebotara pero no llamara a la funcion anteriormente hecha, lo cual el estado no se reduce, o sea el ladrillo no desaparece y tambien el puntaje no se suma 
+                        
+                        Recordemos que podemos tener dos bolas, lo cual es el mismo proceso solo que cambiando los valores correspondientes a su posicion
+                        */ 
+
+                        if (b.estado == 10) {
+                            
+                            // se modifica si la bola llega al ladrillo
+                            if (x > b.x && x < b.x + anchoLadrillo && y > b.y && y < b.y + alturaLadrillo) {
+                                dy = -dy;
+
+                                if((Math.round(Math.random() * 100)) % 2){
+                                    sumarPuntaje();// Llama a la funcion para reducir el ciclo, el estado y sumar el puntaje
+                                }
+                            }
+
+                            if (segundaBola) {
+                                if (x2 > b.x && x2 < b.x + anchoLadrillo && y2 > b.y && y2 < b.y + alturaLadrillo) {
+                                    dy2 = -dy2;
+
+                                    if((Math.round(Math.random() * 100)) % 2){
+                                        sumarPuntaje();// Llama a la funcion para reducir el ciclo, el estado y sumar el puntaje
+                                    }
+                                }
+                            }
+                        }
+                }
+            }
+        }
+
+        // Esta funcion permitira que la variable puntaje se pueda visualizar en la pantalla, dentro hay una variable que almacena de manera de texto la palabra puntaje con el valor del puntaje correspondientes, ejemplo "Puntaje: 5". Y gracias al elemento div en HTML se mostrara lo que devuelve esta funcion, esta es tambien llamada en la funcion principal dibujar() 
+
+        function dibujarPuntos(){
+            var str = 'Puntaje: ' + puntaje.toString();
+            document.getElementById('puntos').innerText = str;
+        }
+
+        // Función principal para generar los procesos
+        function dibujar() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            dibujarBola(x, y, ballRadius, "#6317B9"); // dibuja la bola
+
+            // Dibuja una segunda bola
+            if (segundaBola) {
+                dibujarBola(x2, y2, ballRadius - 1, "#2196f3");
+            }
+
+            dibujarPaleta(); // Dibuja la paleta
+            dibujarLadrillos(); // Dibuja el conjunto de los ladrillos
+
+            // SE LLAMA A LA FUNCION DETECTAR COLISION
+            deteccionColision();
+
+            // SE LLAMA A LA FUNCION Dibujar puntos
+            dibujarPuntos();
+            
+            // Rebote de la bola
+            if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+                dx = -dx;
+                colorLadrillos = false;// Cambia el color de los ladrillos si la bola principal rebota en x
+            }
+            if (y + dy < ballRadius) {
+                dy = -dy;
+                var cambia = document.querySelector("canvas");
+                cambia.classList.toggle("activado");
+                colorLadrillos = true;
+            }
+
+            if (x2 + dx2 > canvas.width - ballRadius || x2 + dx2 < ballRadius) {
+                dx2 = -dx2;
+            }
+            if (y2 + dy2 < ballRadius) {
+                dy2 = -dy2;
+            }
+
+            // Rebotar en Paleta o Game Over
+            if (y + dy > canvas.height - ballRadius) {
+                if (x > paletaPosX && x < paletaPosX + anchuraPaleta) {
+                    dy = -dy;
+                } else {
+                    clearInterval(juego);
+                    alert("Game Over");
+                    document.location.reload();
+                }
+            }
+            if (segundaBola) {
+                if (y2 + dy2 > canvas.height - ballRadius) {
+                    if (x2 > paletaPosX && x2 < paletaPosX + anchuraPaleta) {
+                        dy2 = -dy2;
+                    } else {
+                        clearInterval(juego);
+                        alert("Game Over");
+                        document.location.reload();
+                    }
+                }
+            }
+
+            // Movimiento Paleta
+            if (flechaDerechaPulsada && paletaPosX < canvas.width - anchuraPaleta) {
+                paletaPosX += 7;
+            } else if (flechaIzquierdaPulsada && paletaPosX > 0) {
+                paletaPosX -= 7;
+            }
+
+            // Se incrementan los valores de la pocion de las bolas
+            x += dx;
+            y += dy;
+            x2 += dx2;
+            y2 += dy2;
+        }
+
+        var juego = setInterval(dibujar, 20);
+    </script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Juego 2D</title>
+
+    <!-- Codigo Css para darle una mejor apariencia a la pagina 
+         Define los estilos de la interfaz visual
+         padding es la distancia de un objeto en relación con el marco que lo contiene
+         margin es la distancia que separa a un objeto de otro
+         background es el color de fondo
+         display: block; Estos elementos fluyen hacia abajo
+         margin: 0 auto; Centra el canvas en la pantalla -->
+    <style>
+        /* Importa una fuente(tipo de letra) */
+        @import url("https://fonts.googleapis.com/css2?family=Poppins&display=swap");
+
+        * {
+            font-family: "Poppins", sans-serif;
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            margin: 0 200px 0 200px;
+        }
+
+        header h1 {
+            font-size: 2em;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        #miCanvas {
+            width: 100%;
+            height: 80vh;
+            background-color: #dddddd;
+        }
+    </style>
+</head>
+
+<!-- Comenzamos nuestra pagina -->
+
+<body>
+    <!-- Intrducimos un titulo -->
+    <header>
+        <h1>
+            Juego 2D desarrollado en JavaScript puro: Introducción a la Informática
+        </h1>
+    </header>
+
+    <!-- Introducimos nuestro canvas con un identificador -->
+    <canvas id="miCanvas"> </canvas>
+
+    <!-- Introducimos nuestro codigo JavaScript -->
+    <script>
+        /* Llamamos al canvas y le decimos que queremos dibujar en 2d */
+        var canvas = document.getElementById("miCanvas");
+        var ctx = canvas.getContext("2d");
+
+        //Variables para la bola
+        var ballRadius = 3; //Tamaño de la bola
+
+        var x = canvas.width / 2; // Coloca la bola en la mitad del ancho deL CANVAS
+
+        var y = canvas.height - 30; // Coloca la bola en la parte inferior del CANVAS
+
+        /* DEFINE LOS INCREMENTOS EN X y en Y. El valor dy es negativo 
+      para que inicialmente el movimiento de la bola sea hacia arriba */
+        var dx = 2;
+        var dy = -2;
+
+        //Bola 2 el valor dx es negativo para que inicalmente se mueva a la izquierda
+        var x2 = x;
+        var y2 = y;
+        var dx2 = -0.8;
+        var dy2 = -0.8;
+
+        function dibujarBola(cordernaX, cordenaY, tamaño, color) {
+            // Inicia el dibujo
+            ctx.beginPath();
+            ctx.arc(cordernaX, cordenaY, tamaño, 0, Math.PI * 2);
+            // Color de llenado
+            ctx.fillStyle = color;
+            // Se rellena el círculo con el color indicado
+            ctx.fill();
+            // Finaliza el dibujo
+            ctx.closePath();
+        }
+
+        var azar = Math.random() * 100; // Nos dara un numero al azar entre 0 y 99
+
+        function dibujar() {
+            // Limpia el CANVAS
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Dibuja la bola.
+            dibujarBola(x, y, ballRadius, "#6317B9");
+
+            /* Si la variable azar que almacena un numero aleatorio 
+            es mayor a 50 entonces dibujara una segunda bola, 
+            no sabemos si es la primera vez que cargamos la pagina o n veces */
+            if (azar > 50) {
+                dibujarBola(x2, y2, ballRadius - 1, "#2196f3");
+            }
+
+            // Se incrementa los valores para poder hacer el movimiento de las bolas
+            x += dx;
+            y += dy;
+            x2 += dx2;
+            y2 += dy2;
+        }
+
+        /* EJECUTA LA FUNCIÓN dibujar CADA 10 MILISEGUNDOS
+      Este es el mecanismo utilizado para construir un sistema que
+      ejecuta acciones de manera permanente y periódica */
+        setInterval(dibujar, 20);
+    </script>
+</body>
+
+</html>

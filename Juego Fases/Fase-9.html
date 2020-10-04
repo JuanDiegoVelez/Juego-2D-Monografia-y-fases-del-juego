@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Juego 2D</title>
+
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Poppins&display=swap");
+
+        * {
+            font-family: "Poppins", sans-serif;
+            padding: 0;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 2em;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        canvas {
+            background-color: #dddddd;
+            transition: 0.5s;
+            display: block;
+            margin: auto;
+
+            /* OCULTA EL CURSOR EN EL CANVAS */
+            cursor: none;
+        }
+
+        canvas.activado {
+            background-color: #222222;
+        }
+
+    </style>
+</head>
+
+<body>
+    <h1>Juego 2D - Fase 9</h1>
+
+    <canvas id="miCanvas" width="1200" height="640"> </canvas>
+
+    <script>
+        var canvas = document.getElementById("miCanvas");
+        var ctx = canvas.getContext("2d");
+
+        var ballRadius = 10;
+        var x = canvas.width / 2;
+        var y = canvas.height - 30;
+        var dx = 5;
+        var dy = -5;
+
+        var x2 = x;
+        var y2 = y;
+        var dx2 = -1.5;
+        var dy2 = -1.5;
+
+        var segundaBola = false;
+        if (Math.random() * 100 > 50) {
+            segundaBola = true;
+        }
+
+        // Paleta
+        var alturaPaleta = 15;
+        var anchuraPaleta = 140;
+
+        if (segundaBola) {
+            anchuraPaleta = 180;
+        }
+
+        var paletaPosX = (canvas.width - anchuraPaleta) / 2;
+        var flechaDerechaPulsada = false;
+        var flechaIzquierdaPulsada = false;
+
+        var numFilasLadrillos = 0;
+        var numColumnasLadrillos = 0;
+
+        do {
+            numFilasLadrillos = Math.round(Math.random() * 100);
+            numColumnasLadrillos = Math.round(Math.random() * 10);
+        } while (numFilasLadrillos < 1 || numFilasLadrillos > 14 || numColumnasLadrillos < 1 || numColumnasLadrillos > 8);
+
+        var anchoLadrillo = 70;
+        var alturaLadrillo = 20;
+        var rellenoLadrillos = 10;
+        var vacioSuperiorLadrillos = 50;
+        var vacioIzquierdoLadrillos = 45;
+
+        var puntaje = 0;
+
+        // ESTA INSTRUCCIÓN CONTROLA EL NÚMERO DE VIDAS DEL JUGADOR
+        // CUANDO LA INSTRUCCIÓN vidas DISMINUYE A CERO, EL JUGADOR PIERDE,
+        // PUESTO QUE HA PERDIDO TRES VECES
+
+        // ESTA VARIABLE DEFINE UN COLOR
+        // Se pueden utilizar otros colores para los diferentes elementos del juego
+
+        var colorFigura = "#ff0000";
+        var colorBola = "#6317B9";
+        var colorBola2 = "#2196f3";
+        var colorPaleta = "#f5d109";
+        var colorLadrillo = "#e61c1cdc";
+        var colorLadrillo2 = "#e4bb06fa";
+        var colorTexto = "#2196f3";
+        var vidas = 3;
+
+        // ESTA INSTRUCCIÓN OCULTA EL CURSOR DEL RATON (DENTRO DEL CANVAS)
+        canvas.style.cursor = 'none';
+
+        var ladrillos = [];
+
+        for (var columna = 0; columna < numColumnasLadrillos; columna++) {
+            ladrillos[columna] = [];
+            for (var fila = 0; fila < numFilasLadrillos; fila++) {
+                ladrillos[columna][fila] = { x: 0, y: 0, estado: 10, ciclo: 10 };
+            }
+        }
+
+        document.addEventListener("keydown", teclaPresionada, false);
+        document.addEventListener("keyup", teclaLiberada, false);
+
+        document.addEventListener("mousemove", manejadorRaton, false);
+
+        function teclaPresionada(e) {
+            if (e.keyCode == 39) {
+                flechaDerechaPulsada = true;
+            } else if (e.keyCode == 37) {
+                flechaIzquierdaPulsada = true;
+            }
+        }
+        function teclaLiberada(e) {
+            if (e.keyCode == 39) {
+                flechaDerechaPulsada = false;
+            } else if (e.keyCode == 37) {
+                flechaIzquierdaPulsada = false;
+            }
+        }
+
+        function manejadorRaton(e) {
+            var posXRatonDentroDeCanvas = e.clientX - canvas.offsetLeft;
+            if (posXRatonDentroDeCanvas > anchuraPaleta / 2 && posXRatonDentroDeCanvas < canvas.width - anchuraPaleta / 2) {
+                paletaPosX = posXRatonDentroDeCanvas - anchuraPaleta / 2;
+            }
+        }
+
+        function dibujarBola(cordernaX, cordenaY, tamaño, color) {
+            ctx.beginPath();
+            ctx.arc(cordernaX, cordenaY, tamaño, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function dibujarPaleta() {
+            ctx.beginPath();
+            ctx.rect(paletaPosX, canvas.height - alturaPaleta, anchuraPaleta, alturaPaleta);
+            ctx.fillStyle = colorPaleta;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        var colorLadrillos = false; // La utlizaremos para cambiar el color de los ladrillos
+
+        function dibujarLadrillos() {
+            for (var columnas = 0; columnas < numColumnasLadrillos; columnas++) {
+                for (var filas = 0; filas < numFilasLadrillos; filas++) {
+
+                    if (ladrillos[columnas][filas].estado > 0) {
+
+                        var b = ladrillos[columnas][filas];
+
+                        var brickX = filas * (anchoLadrillo + rellenoLadrillos) + vacioIzquierdoLadrillos;
+                        var brickY = columnas * (alturaLadrillo + rellenoLadrillos) + vacioSuperiorLadrillos;
+
+                        if (b.estado < 10 && b.estado > 1) {
+                            b.ciclo--;
+                            if (b.ciclo == 0) {
+                                if (b.estado > 1) {
+                                    b.estado--;
+                                    b.ciclo = 10;
+                                }
+                            }
+                        }
+
+                        ladrillos[columnas][filas].x = brickX;
+                        ladrillos[columnas][filas].y = brickY;
+
+                        ctx.beginPath();
+                        ctx.rect(brickX, brickY, anchoLadrillo, alturaLadrillo);
+
+                        if (b.estado == 10) {
+                            if (colorLadrillos) {
+                                if (filas % 2) {
+                                    ctx.fillStyle = colorLadrillo;
+                                } else {
+                                    ctx.fillStyle = colorLadrillo2;
+                                }
+                            } else {
+                                if (filas % 2) {
+                                    ctx.fillStyle = colorLadrillo2;
+                                } else {
+                                    ctx.fillStyle = colorLadrillo;
+                                }
+                            }
+
+                        } else if (b.estado == 9) {
+                            ctx.fillStyle = "#fad638";
+                        } else if (b.estado == 8) {
+                            ctx.fillStyle = "#fbdb51";
+                        } else if (b.estado == 7) {
+                            ctx.fillStyle = "#fbe16a";
+                        } else if (b.estado == 6) {
+                            ctx.fillStyle = "#fce683";
+                        } else if (b.estado == 5) {
+                            ctx.fillStyle = "#fceb9c";
+                        } else if (b.estado == 4) {
+                            ctx.fillStyle = "#fdf0b4";
+                        } else if (b.estado == 3) {
+                            ctx.fillStyle = "#fef5cd";
+                        } else if (b.estado == 2) {
+                            ctx.fillStyle = "#fefae6";
+                        } else if (b.estado == 1) {
+                            ctx.fillStyle = "transparent";
+                        }
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                }
+            }
+        }
+
+        // Detectar la colision
+        function deteccionColision() {
+            for (var c = 0; c < numColumnasLadrillos; c++) {
+                for (var f = 0; f < numFilasLadrillos; f++) {
+                    var b = ladrillos[c][f];
+                    function sumarPuntaje() {
+                        b.estado--;
+                        b.ciclo--;
+                        puntaje++;
+                        if (puntaje == numFilasLadrillos * numColumnasLadrillos) {
+                            alert("FELICITACIONES: HAS GANADO");
+                            document.location.reload();
+                        }
+                    }
+                    if (b.estado == 10) {
+
+                        // se modifica si la bola llega al ladrillo
+                        if (x > b.x && x < b.x + anchoLadrillo + ballRadius / 2 && y > b.y && y < b.y + alturaLadrillo + ballRadius / 2) {
+                            dy = -dy;
+
+                            if ((Math.round(Math.random() * 100)) % 2) {
+                                sumarPuntaje();// Llama a la funcion para reducir el ciclo, el estado y sumar el puntaje
+                            }
+                        }
+
+                        if (segundaBola) {
+                            if (x2 > b.x && x2 < b.x + anchoLadrillo && y2 > b.y && y2 < b.y + alturaLadrillo) {
+                                dy2 = -dy2;
+
+                                if ((Math.round(Math.random() * 100)) % 2) {
+                                    sumarPuntaje();// Llama a la funcion para reducir el ciclo, el estado y sumar el puntaje
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function dibujarPuntos() {
+            ctx.font = "24px Poppins";
+            ctx.fillStyle = colorTexto;
+            ctx.fillText("puntaje: " + puntaje, 8, 20);
+        }
+
+        function dibujarVidas() {
+            ctx.font = "24px Poppins";
+            ctx.fillStyle = colorTexto;
+            // SE MUESTRA EL NÚMERO DE VIDAS DISPONIBLES
+            ctx.fillText("vidas: " + vidas, canvas.width - 100, 20);
+        }
+
+
+        /* La siguiente funcion permitira evitar escribir el codigo dos veces ya que tenemos posiblemente dos bolas */
+
+        function quitarVidas() {
+            // SI SE PRODUCE UN CONTACTO DE LA BOLA CON LA BASE DEL CANVAS
+            // SE PIERDE UNA VIDA. PARA ELLO, LA INSTRUCCIÓN vidas--;
+            // LO CUAL EQUIVALE A: vidas = vidas - 1
+            vidas--;
+            if (!vidas) {
+                // SI vidas == 0 (lo cual también puede escribir: !vidas)
+                // EL JUGADOR HA PERDIDO
+                alert("GAME OVER");
+                document.location.reload();
+            } else {
+                // SI vidas > 0 (diferente de CERO) EL JUEGO CONTINUA
+                x = canvas.width / 2;
+                y = canvas.height - 30;
+                x2 = canvas.width / 2;
+                y2 = canvas.height - 30;
+                dx = 5;
+                dy = -5;
+                dx2 = -1.5;
+                dy2 = -1.5;
+                paletaPosX = (canvas.width - anchuraPaleta) / 2;
+            }
+        }
+
+        function dibujar() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // SE LLAMA A LA FUNCION Dibujar puntos
+            dibujarPuntos();
+
+            // SE LLAMA A LA FUNCION Dibujar puntos
+            dibujarVidas();
+
+            dibujarLadrillos();
+            dibujarBola(x, y, ballRadius, colorBola);
+            if (segundaBola) {
+                dibujarBola(x2, y2, ballRadius - 2, colorBola2);
+            }
+            dibujarPaleta();
+            deteccionColision();
+
+            // Rebote de la bola
+            if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+                dx = -dx;
+                colorLadrillos = false;// Cambia el color de los ladrillos si la bola principal rebota en x
+            }
+            if (y + dy < ballRadius) {
+                dy = -dy;
+                var cambia = document.querySelector("canvas");
+                cambia.classList.toggle("activado");
+                colorLadrillos = true;
+            }
+
+            if (x2 + dx2 > canvas.width - ballRadius || x2 + dx2 < ballRadius) {
+                dx2 = -dx2;
+            }
+            if (y2 + dy2 < ballRadius) {
+                dy2 = -dy2;
+            }
+
+            // Rebotar en Paleta o Game Over
+            if (y + dy > canvas.height - ballRadius) {
+                if (x > paletaPosX && x < paletaPosX + anchuraPaleta) {
+                    dy = -dy;
+                } else {
+                    quitarVidas();
+                }
+            }
+            if (segundaBola) {
+                if (y2 + dy2 > canvas.height - ballRadius) {
+                    if (x2 > paletaPosX && x2 < paletaPosX + anchuraPaleta) {
+                        dy2 = -dy2;
+                    } else {
+                        quitarVidas();
+                    }
+                }
+            }
+
+            // Movimiento Paleta
+            if (flechaDerechaPulsada && paletaPosX < canvas.width - anchuraPaleta) {
+                paletaPosX += 15;
+            } else if (flechaIzquierdaPulsada && paletaPosX > 0) {
+                paletaPosX -= 15;
+            }
+
+            // Se incrementan los valores de la pocion de las bolas
+            x += dx;
+            y += dy;
+            x2 += dx2;
+            y2 += dy2;
+
+            // ESTE ES UN SEGUNDO MÉTODO PARA REALIZAR LA ANIMACIÓN DEL JUEGO
+            // LA INSTRUCCIÓN: requestAnimationFrame SE EJECUTA 60 VECES POR SEGUNDO
+            // Y AL EJECUTARSE LLAMA A LA FUNCIÓN ENTRE PARÉNTESIS
+            // POR TANTO, dibujar SE EJECUTA 60 VECES POR SEGUNDO
+            // GENERANDO EL CICLO DEL JUEGO
+            requestAnimationFrame(dibujar);
+        }
+
+        dibujar();
+    </script>
+</body>
+
+</html>

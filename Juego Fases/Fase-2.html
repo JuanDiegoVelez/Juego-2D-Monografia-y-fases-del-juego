@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Juego 2D</title>
+
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Poppins&display=swap");
+        * {
+            font-family: "Poppins", sans-serif;
+            padding: 0;
+            margin: 0;
+        }
+        body {
+            margin: 0 200px 0 200px;
+        }
+        h1 {
+            font-size: 2em;
+            text-transform: uppercase;
+            text-align: center;
+        }
+        canvas {
+            width: 100%;
+            height: 80vh;
+            background-color: #dddddd;
+            transition: 0.5s; /* El retardo para cambiar de un estado a otro */
+        }
+        /* Se crea un nuevo estilo el cual sera activado cuando la bola principal toca el limite en la parte superior del canvas */
+        canvas.activado{
+            background-color: #222222;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Juego 2D - Fase 2</h1>
+
+    <canvas id="miCanvas"> </canvas>
+
+    <script>
+        var canvas = document.getElementById("miCanvas");
+        var ctx = canvas.getContext("2d");
+        var ballRadius = 3; 
+        var x = canvas.width / 2;
+        var y = canvas.height - 30;
+        var dx = 2;
+        var dy = -2;
+        var x2 = x;
+        var y2 = y;
+        var dx2 = -0.8;
+        var dy2 = -0.8;
+
+        function dibujarBola(cordernaX, cordenaY, tamaño, color) {
+            ctx.beginPath();
+            ctx.arc(cordernaX, cordenaY, tamaño, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        var azar = Math.random() * 100;
+
+        function dibujar() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            dibujarBola(x, y, ballRadius, "#6317B9");
+
+            if (azar > 50) {
+                dibujarBola(x2, y2, ballRadius - 1, "#2196f3");
+            }
+            //Las condiciones nos permitira saber si la bola a llegado al limete de x o y, si es asi entonces cambiara la dirección, se logra cambiando el signo de las variable dx y dy, tenemos posiblemente dos bolas las cuales el movimento de una de ellas es mas lento, por lo cual no golpeara a la misma vez entonces utilizamos diferentes condiciones.
+
+            //CONDIONES PARA LA PRIMERA BOLA
+            //Cuando el valor de x + dx es mayor al ancho del canvas o menor al radio de la bola entonces se cambia la dirección horizontal
+            if(x + dx > canvas.width-ballRadius || x + dx < ballRadius){
+                dx = -dx;
+            }
+            //Cuando el valor de y + dy es mayor a la altura del canvas o menor al radio de la bola entonces se cambia la dirección vertical.
+            if(y + dy < ballRadius){
+                dy = -dy;
+
+                //Si llega al limite en Y entonces rebotara y habra un evento, el cual consiste que al elemento CANVAS en HTML le agregue o le quite una clase(identificador) la cual permitira en CSS cambiar el color del CANVAS
+                var cambia = document.querySelector('canvas')
+                cambia.classList.toggle('activado')
+            }
+            //CONDICONES PARA LA SEGUNDA BOLA similares a la bola 1 solo que diferentes coordenas X y Y
+            if(x2 + dx2 > canvas.width-ballRadius || x2 + dx2 < ballRadius){
+                dx2 = -dx2;
+            }
+            if(y2 + dy2 < ballRadius){
+                dy2 = -dy2;
+            }
+
+            x += dx;
+            y += dy;
+            x2 += dx2;
+            y2 += dy2;
+        }
+
+        setInterval(dibujar, 20);
+    </script>
+</body>
+</html>

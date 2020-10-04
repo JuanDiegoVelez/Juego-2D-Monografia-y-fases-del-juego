@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Juego 2D</title>
+
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Poppins&display=swap");
+        * {
+            font-family: "Poppins", sans-serif;
+            padding: 0;
+            margin: 0;
+        }
+        body {
+            margin: 0 200px 0 200px;
+        }
+        h1 {
+            font-size: 2em;
+            text-transform: uppercase;
+            text-align: center;
+        }
+        canvas {
+            width: 100%;
+            height: 80vh;
+            background-color: #dddddd;
+            transition: 0.5s;
+        }
+        canvas.activado{
+            background-color: #222222;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Juego 2D - Fase 3</h1>
+
+    <canvas id="miCanvas"> </canvas>
+
+    <script>
+        var canvas = document.getElementById("miCanvas");
+        var ctx = canvas.getContext("2d");
+        var ballRadius = 3; 
+        var x = canvas.width / 2; //x: columna en la que se encuentra situada la bola
+        var y = canvas.height - 30; //y: fila en la que se encuentra situada la bola
+        var dx = 2; //dx: desplazamiento horizontal de la bola
+        var dy = -2;//dy: desplazamiento vertical de la bola
+
+        var x2 = x;
+        var y2 = y;
+        var dx2 = -0.8;
+        var dy2 = -0.8;
+
+        /* Las siguiente variables corresponden a las caracteristicas de la paleta */
+        var alturaPaleta = 4; // define la altura de lapaleta en pixeles
+        var anchuraPaleta = 40; // define El ancho de la paleta
+
+        //Posicion donde se encontrara inicialmente nuestra paleta en este caso en el centro del canvas y en la base de la pantalla, Para calcular la posición en X de la paleta, se debe tomar el ancho del CANVAS, restarle la anchura de la paleta, y el espacio que sobre debe dividirse entre dosEsto garantiza que originalmente la paleta estará centrada en la base de la pantalla
+        var paletaPostX = (canvas.width-anchuraPaleta) / 2;
+
+        /* Se define dos variables con tipos booleanos, para saber que tecla se preciona y permitir el movimiento, estas comienzan con el valor de false ya que al inicar el juego no se ha precionado ninguna tecla, cuando se pulse cualquiera de las dos teclas el estado correspondiente a la tecla cambiara a true, y permitira mover la paleta en su respectiva dirección   */
+
+        var flechaDerechaPulsada = false; // corresponde a la flecha derecha si es pulsada cambiara a true
+        var flechaIzquierdaPulsada = false; // corresponde a la flecha izquierda si es pulsada cambiara a true
+
+        /* La instruccion addEvenetListener, es un mecanismo para dar respuesta a los eventos que se producen en el juego, por ejemplo al precionar una de las dos teclas queremos que se mueva.
+
+        Este recibe tres parametros.
+        1) El evento que se va a detectar en este caso precionar una tecla
+        2) El nombre que le asignamos a la función que responde ante el evento
+        3) Valor true o false que determina la reacción ante el evento, o sea la propagación de este, cuando le damos a la tecla el evento sera asignado a toda la pagina, lo cual utilizamos el valor de false, este valor permite que el flujo del evento comience desde lo inferior hasta lo superior, o sea que al pulsar la tecla el evento se le asignara al CANVAS y luego al Body, en cambio si el valor es true el evento se le asignara al Body y luego al CANVAS. 
+         */
+
+        // Evento si se pulsa una tecla
+        document.addEventListener("keydown", teclaPresionada, false);
+
+        // Evento si se suelta una tecla
+        document.addEventListener("keyup", teclaLiberada, false);
+
+        // Función que maneja la tecla presionada
+        function teclaPresionada(e){
+            if(e.keyCode == 39){
+                /* e: es el evento que se produce, keyCode permitir saber que codigo correspondiente a la tecla se ha presionado, 39 equivale a la tecla  flecha derecha por lo cual el valor de la variable la flechaDerechaPulsada cambia a true*/
+                flechaDerechaPulsada = true;
+            }
+            else if(e.keyCode == 37){
+                /* e: es el evento que se produce, keyCode permitir saber que codigo correspondiente a la tecla se ha presionado, 37 equivale a la tecla  flecha izquierda por lo cual el valor de la variable la flechaIzquierdaPulsada cambia a true*/
+                flechaIzquierdaPulsada = true;
+            }
+        }
+
+        // Función que maneja la tecla liberada
+        function teclaLiberada(e){
+            if(e.keyCode == 39){
+                /* Si la tecla liberada es la 39, se ha dejado de precionar la flecha derecha, la variable cambia a false*/
+                flechaDerechaPulsada = false;
+            }
+            else if(e.keyCode == 37){
+                /* Si la tecla liberada es la 37, se ha dejado de precionar la flecha izquierda, la variable cambia a false*/
+                flechaIzquierdaPulsada = false;
+            }
+        }
+        
+        function dibujarBola(cordernaX, cordenaY, tamaño, color) {
+            ctx.beginPath();
+            ctx.arc(cordernaX, cordenaY, tamaño, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        //Función para dibujar la paleta
+        function dibujarPaleta(){
+
+            ctx.beginPath(); // Se incia el dibujo
+
+            //Se crea un rectangulo utlizando los valores de las variable correspondientes a la paleta, utilizamos la posición de x, y Y menos la altura de la paleta parasituarla en la base del CANVAS ,la altura, anchura
+            ctx.rect(paletaPostX, canvas.height-alturaPaleta, anchuraPaleta, alturaPaleta);
+
+            ctx.fillStyle = "#f5d109" // Color de ala paleta
+            ctx.fill(); // Se rellena la paleta
+            ctx.closePath(); // Finaliza el dibujo
+        }
+
+        var azar = Math.random() * 100;
+
+        // Función principal para generar los procesos
+        function dibujar() {
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            dibujarBola(x, y, ballRadius, "#6317B9"); // dibuja la bola
+
+            dibujarPaleta(); // Dibuja la paleta
+
+            // Dibuja una segunda bola
+            if (azar > 50) {
+                dibujarBola(x2, y2, ballRadius - 1, "#2196f3");
+            }
+
+            // Rebote de la bola
+            if(x + dx > canvas.width-ballRadius || x + dx < ballRadius){
+                dx = -dx;
+            }
+            
+            if(y + dy < ballRadius){
+                dy = -dy;
+
+                var cambia = document.querySelector('canvas')
+                cambia.classList.toggle('activado')
+            }
+            
+            if(x2 + dx2 > canvas.width-ballRadius || x2 + dx2 < ballRadius){
+                dx2 = -dx2;
+            }
+            if(y2 + dy2 < ballRadius){
+                dy2 = -dy2;
+            }
+
+            /* Movimiento de la paleta 
+            si se pulsa la flecha derecha y aun no ha llegado al borde de la anchura del CANVAS se puede carbiar su posición, la función dibujarPaleta() redibuja la paleta de manera ciclica en la nueva posición*/
+            if(flechaDerechaPulsada && paletaPostX < canvas.width-anchuraPaleta){
+                // Desplaza la paleta hacia la derecha se logra sumando la poscion actual con la nueva
+                paletaPostX += 7;
+            } 
+            else if(flechaIzquierdaPulsada && paletaPostX > 0){
+                // Desplaza la paleta hacia la izquierda se logra restando la poscion actual con la nueva
+                paletaPostX -= 7;
+            }
+
+            // Se incrementan los valores de la pocion de las bolas
+            x += dx;
+            y += dy;
+            x2 += dx2;
+            y2 += dy2;
+        }
+
+        // Redibuja, actualiza las posiciones en el juego cada 25 milisegundos,  
+        setInterval(dibujar, 25);
+    </script>
+</body>
+</html>

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Juego 2D</title>
+
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Poppins&display=swap");
+
+        * {
+            font-family: "Poppins", sans-serif;
+            padding: 0;
+            margin: 0;
+        }
+
+        body {
+            margin: 0 200px 0 200px;
+        }
+
+        h1 {
+            font-size: 2em;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        canvas {
+            background-color: #dddddd;
+            transition: 0.5s;
+            display: block;
+            margin: 50px auto;
+        }
+
+        canvas.activado {
+            background-color: #222222;
+        }
+
+        #puntos {
+            font-size: 2em;
+            position: fixed;
+            top: 50px;
+            color: #2196f3;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Juego 2D - Fase 8</h1>
+    <canvas id="miCanvas" width="1200" height="640"> </canvas>
+
+    <div id="puntos">
+    </div>
+
+    <script>
+        var canvas = document.getElementById("miCanvas");
+        var ctx = canvas.getContext("2d");
+
+        var ballRadius = 10;
+        var x = canvas.width / 2;
+        var y = canvas.height - 30;
+        var dx = 5;
+        var dy = -5;
+
+        var x2 = x;
+        var y2 = y;
+        var dx2 = -1.5;
+        var dy2 = -1.5;
+
+        var segundaBola = false;
+        if (Math.random() * 100 > 50) {
+            segundaBola = true;
+        }
+
+        // Paleta
+        var alturaPaleta = 15;
+        var anchuraPaleta = 140;
+
+        if (segundaBola) {
+            anchuraPaleta = 180;
+        }
+
+        var paletaPosX = (canvas.width - anchuraPaleta) / 2;
+        var flechaDerechaPulsada = false;
+        var flechaIzquierdaPulsada = false;
+
+        var numFilasLadrillos = 0;
+        var numColumnasLadrillos = 0;
+
+        do {
+            numFilasLadrillos = Math.round(Math.random() * 100);
+            numColumnasLadrillos = Math.round(Math.random() * 10);
+        } while (numFilasLadrillos < 1 || numFilasLadrillos > 14 || numColumnasLadrillos < 1 || numColumnasLadrillos > 8);
+
+        var anchoLadrillo = 70;
+        var alturaLadrillo = 20;
+        var rellenoLadrillos = 10;
+        var vacioSuperiorLadrillos = 30;
+        var vacioIzquierdoLadrillos = 45;
+
+        var puntaje = 0;
+
+        var ladrillos = [];
+
+        for (var columna = 0; columna < numColumnasLadrillos; columna++) {
+            ladrillos[columna] = [];
+            for (var fila = 0; fila < numFilasLadrillos; fila++) {
+                ladrillos[columna][fila] = { x: 0, y: 0, estado: 10, ciclo: 10 };
+            }
+        }
+
+        document.addEventListener("keydown", teclaPresionada, false);
+        document.addEventListener("keyup", teclaLiberada, false);
+
+        document.addEventListener("mousemove", manejadorRaton, false);
+
+        function teclaPresionada(e) {
+            if (e.keyCode == 39) {
+                flechaDerechaPulsada = true;
+            } else if (e.keyCode == 37) {
+                flechaIzquierdaPulsada = true;
+            }
+        }
+        function teclaLiberada(e) {
+            if (e.keyCode == 39) {
+                flechaDerechaPulsada = false;
+            } else if (e.keyCode == 37) {
+                flechaIzquierdaPulsada = false;
+            }
+        }
+
+        // ESTE ES EL MANEJADOR DEL RATÓN
+        // ------------------------------
+        // La instrucción: "offsetLeft" calcula la distancia desde el borde izquierdo 
+        // de la pantalla hasta un componente html
+        // ------------------------------
+        // Por tanto, la instrucción: "canvas.offsetLeft" calcula el espacio a la izquierda
+        // del objeto CANVAS
+        // ------------------------------
+        // Dentro del manejador del ratón, la instrucción: "e.clientX" calcula la posición
+        // del ratón en la pantalla. Para calcular la posición del ratón DENTRO del CANVAS
+        // debemos RESTAR a la posición X del ratón, el valor izquierdo del CANVAS
+        // ------------------------------
+        // Es decir: "e.clientX - canvas.offsetLeft"
+        // se multiplica por cuatro para que el movimiento sea permitidos solo en la mitad del CANVAS
+        // ------------------------------
+        
+        function manejadorRaton(e){
+            var posXRatonDentroDeCanvas = e.clientX - canvas.offsetLeft;
+
+            // La siguiente condicional determinara si el raton esta dentro del CANVAS
+
+            if (posXRatonDentroDeCanvas > anchuraPaleta / 2 && posXRatonDentroDeCanvas < canvas.width - anchuraPaleta / 2) {
+
+                // Si el raton esta dentro del canvas. Se recalcula la posicion de la paleta, la posicon de la paleta es ahora la mima posicion del ratón. Se resta ya que la paleta tiene un ancho, gracias a esto la paleta se mueve a basa del ratón
+
+                paletaPosX = posXRatonDentroDeCanvas - anchuraPaleta / 2;
+            }
+        }
+
+        function dibujarBola(cordernaX, cordenaY, tamaño, color) {
+            ctx.beginPath();
+            ctx.arc(cordernaX, cordenaY, tamaño, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function dibujarPaleta() {
+            ctx.beginPath();
+            ctx.rect(paletaPosX, canvas.height - alturaPaleta, anchuraPaleta, alturaPaleta);
+            ctx.fillStyle = "#f5d109";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        var colorLadrillos = false; // La utlizaremos para cambiar el color de los ladrillos
+
+        function dibujarLadrillos() {
+            for (var columnas = 0; columnas < numColumnasLadrillos; columnas++) {
+                for (var filas = 0; filas < numFilasLadrillos; filas++) {
+
+                    if (ladrillos[columnas][filas].estado > 0) {
+
+                        var b = ladrillos[columnas][filas];
+
+                        var brickX = filas * (anchoLadrillo + rellenoLadrillos) + vacioIzquierdoLadrillos;
+                        var brickY = columnas * (alturaLadrillo + rellenoLadrillos) + vacioSuperiorLadrillos;
+
+                        if (b.estado < 10 && b.estado > 1) {
+                            b.ciclo--;
+                            if (b.ciclo == 0) {
+                                if (b.estado > 1) {
+                                    b.estado--;
+                                    b.ciclo = 10;
+                                }
+                            }
+                        }
+
+                        ladrillos[columnas][filas].x = brickX;
+                        ladrillos[columnas][filas].y = brickY;
+
+                        ctx.beginPath();
+                        ctx.rect(brickX, brickY, anchoLadrillo, alturaLadrillo);
+
+                        if (b.estado == 10) {
+                            if (colorLadrillos) {
+                                if (filas % 2) {
+                                    ctx.fillStyle = "#e61c1cdc";
+                                } else {
+                                    ctx.fillStyle = "#e4bb06fa";
+                                }
+                            } else {
+                                if (filas % 2) {
+                                    ctx.fillStyle = "#e4bb06fa";
+                                } else {
+                                    ctx.fillStyle = "#e61c1cdc";
+                                }
+                            }
+
+                        } else if (b.estado == 9) {
+                            ctx.fillStyle = "#fad638";
+                        } else if (b.estado == 8) {
+                            ctx.fillStyle = "#fbdb51";
+                        } else if (b.estado == 7) {
+                            ctx.fillStyle = "#fbe16a";
+                        } else if (b.estado == 6) {
+                            ctx.fillStyle = "#fce683";
+                        } else if (b.estado == 5) {
+                            ctx.fillStyle = "#fceb9c";
+                        } else if (b.estado == 4) {
+                            ctx.fillStyle = "#fdf0b4";
+                        } else if (b.estado == 3) {
+                            ctx.fillStyle = "#fef5cd";
+                        } else if (b.estado == 2) {
+                            ctx.fillStyle = "#fefae6";
+                        } else if (b.estado == 1) {
+                            ctx.fillStyle = "transparent";
+                        }
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                }
+            }
+        }
+
+        // Detectar la colision
+        function deteccionColision() {
+            for (var c = 0; c < numColumnasLadrillos; c++) {
+                for (var f = 0; f < numFilasLadrillos; f++) {
+                    var b = ladrillos[c][f];
+                    function sumarPuntaje() {
+                        b.estado--;
+                        b.ciclo--;
+                        puntaje++;
+                        if (puntaje == numFilasLadrillos * numColumnasLadrillos) {
+                            alert("FELICITACIONES: HAS GANADO");
+                            document.location.reload();
+                        }
+                    }
+                    if (b.estado == 10) {
+
+                        // se modifica si la bola llega al ladrillo
+                        if (x > b.x && x < b.x + anchoLadrillo + ballRadius/2 && y > b.y && y < b.y + alturaLadrillo + ballRadius/2) {
+                            dy = -dy;
+
+                            if ((Math.round(Math.random() * 100)) % 2) {
+                                sumarPuntaje();// Llama a la funcion para reducir el ciclo, el estado y sumar el puntaje
+                            }
+                        }
+
+                        if (segundaBola) {
+                            if (x2 > b.x && x2 < b.x + anchoLadrillo && y2 > b.y && y2 < b.y + alturaLadrillo) {
+                                dy2 = -dy2;
+
+                                if ((Math.round(Math.random() * 100)) % 2) {
+                                    sumarPuntaje();// Llama a la funcion para reducir el ciclo, el estado y sumar el puntaje
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function dibujarPuntos() {
+            var str = 'Puntaje: ' + puntaje.toString();
+            document.getElementById('puntos').innerText = str;
+        }
+
+        function dibujar() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // SE LLAMA A LA FUNCION Dibujar puntos
+            dibujarPuntos();
+
+            dibujarLadrillos(); 
+            dibujarBola(x, y, ballRadius, "#6317B9");
+            if (segundaBola) {
+                dibujarBola(x2, y2, ballRadius - 2, "#2196f3");
+            }
+            dibujarPaleta();
+            deteccionColision();
+
+            // Rebote de la bola
+            if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+                dx = -dx;
+                colorLadrillos = false;// Cambia el color de los ladrillos si la bola principal rebota en x
+            }
+            if (y + dy < ballRadius) {
+                dy = -dy;
+                var cambia = document.querySelector("canvas");
+                cambia.classList.toggle("activado");
+                colorLadrillos = true;
+            }
+
+            if (x2 + dx2 > canvas.width - ballRadius || x2 + dx2 < ballRadius) {
+                dx2 = -dx2;
+            }
+            if (y2 + dy2 < ballRadius) {
+                dy2 = -dy2;
+            }
+
+            // Rebotar en Paleta o Game Over
+            if (y + dy > canvas.height - ballRadius) {
+                if (x > paletaPosX && x < paletaPosX + anchuraPaleta) {
+                    dy = -dy;
+                } else {
+                    clearInterval(juego);
+                    alert("Game Over");
+                    document.location.reload();
+                }
+            }
+            if (segundaBola) {
+                if (y2 + dy2 > canvas.height - ballRadius) {
+                    if (x2 > paletaPosX && x2 < paletaPosX + anchuraPaleta) {
+                        dy2 = -dy2;
+                    } else {
+                        clearInterval(juego);
+                        alert("Game Over");
+                        document.location.reload();
+                    }
+                }
+            }
+
+            // Movimiento Paleta
+            if (flechaDerechaPulsada && paletaPosX < canvas.width - anchuraPaleta) {
+                paletaPosX += 15;
+            } else if (flechaIzquierdaPulsada && paletaPosX > 0) {
+                paletaPosX -= 15;
+            }
+
+            // Se incrementan los valores de la pocion de las bolas
+            x += dx;
+            y += dy;
+            x2 += dx2;
+            y2 += dy2;
+        }
+
+        var juego = setInterval(dibujar, 15);
+    </script>
+</body>
+
+</html>

@@ -35,7 +35,6 @@ do {
     numColumnasLadrillos = Math.round(Math.random() * 10);
 } while (numFilasLadrillos < 1 || numFilasLadrillos > 14 || numColumnasLadrillos < 1 || numColumnasLadrillos > 8);
 
-
 var anchoLadrillo = 70;
 var alturaLadrillo = 20;
 var rellenoLadrillos = 10;
@@ -76,10 +75,12 @@ var vidas = 3;
 
 var ladrillos = [];
 
-for (var columna = 0; columna < numColumnasLadrillos; columna++) {
-    ladrillos[columna] = [];
-    for (var fila = 0; fila < numFilasLadrillos; fila++) {
-        ladrillos[columna][fila] = { x: 0, y: 0, estado: 10, ciclo: 10 };
+function ponerLadrillos(){
+    for (var columna = 0; columna < numColumnasLadrillos; columna++) {
+        ladrillos[columna] = [];
+        for (var fila = 0; fila < numFilasLadrillos; fila++) {
+            ladrillos[columna][fila] = { x: 0, y: 0, estado: 10, ciclo: 10 };
+        }
     }
 }
 
@@ -113,10 +114,6 @@ function manejadorRaton(e) {
     if (posXRatonDentroDeCanvas > anchuraPaleta / 2 && posXRatonDentroDeCanvas < canvas.width - anchuraPaleta / 2) {
         paletaPosX = posXRatonDentroDeCanvas - anchuraPaleta / 2;
     }
-
-    /* if(posXRatonDentroDeCanvas > 0 && posXRatonDentroDeCanvas < canvas.width) {
-        paletaPosX = posXRatonDentroDeCanvas - anchuraPaleta/2;
-    } */
 }
 
 function dibujarBola(cordernaX, cordenaY, tamaño, color) {
@@ -347,7 +344,7 @@ function jugar() {
 
     if (parseInt(valor("numFilas")) > 0 && parseInt(valor("numFilas")) <= 14) {
         numFilasLadrillos = parseInt(valor("numFilas"));
-    } 
+    }
     
     if (parseInt(valor("numColumnas")) > 0 && parseInt(valor("numColumnas")) <= 8) {
         numColumnasLadrillos = parseInt(valor("numColumnas"));
@@ -369,7 +366,6 @@ function jugar() {
         anchuraPaleta = parseFloat(valor("paleta"));
     }
 
-
     clickJugar = true;
 
     dibujar();
@@ -380,6 +376,7 @@ function dibujar() {
 
     dibujarPuntos_Misiles();
     dibujarVidas();
+    ponerLadrillos();
     dibujarLadrillos();
     dibujarBola(x, y, ballRadius, colorBola);
     if (segundaBola) {

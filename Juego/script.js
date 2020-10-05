@@ -369,6 +369,8 @@ function jugar() {
         anchuraPaleta = parseFloat(valor("paleta"));
     }
 
+    ponerLadrillos();
+    
     clickJugar = true;
 
     dibujar();
@@ -379,7 +381,6 @@ function dibujar() {
 
     dibujarPuntos_Misiles();
     dibujarVidas();
-    ponerLadrillos();
     dibujarLadrillos();
     dibujarBola(x, y, ballRadius, colorBola);
     if (segundaBola) {
